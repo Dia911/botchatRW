@@ -1,1 +1,4 @@
-with import <nixpkgs> {}; [ nodejs git ]
+with import <nixpkgs> {}; [
+  nodejs
+  git
+]
