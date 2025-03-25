@@ -1,0 +1,15 @@
+{
+  "name": "botchat",
+  "version": "1.0.0",
+  "description": "A simple chat bot for Facebook page",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1"
+  },
+  "author": "Dia911",
+  "license": "ISC"
+}
