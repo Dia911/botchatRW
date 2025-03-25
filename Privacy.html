@@ -1,0 +1,82 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const request = require('request');
+const path = require('path');
+
+const app = express();
+app.use(bodyParser.json());
+
+// Đặt port cho server
+const port = process.env.PORT || 5000;
+
+app.get('/', (req, res) => {
+  res.send('Hello, this is your bot!');
+});
+
+// Endpoint cho trang Điều khoản Dịch vụ (Terms)
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'), (err) => {
+    if (err) {
+      console.error('Error sending terms.html:', err);
+      res.status(err.status || 500).end();
+    }
+  });
+});
+
+// Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
+// Lưu ý: Đã đổi tên file thành "Privacy.html"
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'Privacy.html'), (err) => {
+    if (err) {
+      console.error('Error sending Privacy.html:', err);
+      res.status(err.status || 500).end();
+    }
+  });
+});
+
+// Cấu hình webhook (GET) để xác thực
+app.get('/webhook', (req, res) => {
+  if (req.query['hub.verify_token'] === 'my_secure_token') {
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.send('Error, wrong validation token');
+  }
+});
+
+// Lắng nghe tin nhắn từ người dùng (POST)
+app.post('/webhook', (req, res) => {
+  let messaging_events = req.body.entry[0].messaging;
+  for (let i = 0; i < messaging_events.length; i++) {
+    let event = messaging_events[i];
+    let sender = event.sender.id;
+    if (event.message && event.message.text) {
+      let text = event.message.text;
+      sendMessage(sender, text);
+    }
+  }
+  res.sendStatus(200);
+});
+
+// Hàm gửi tin nhắn về cho người dùng
+function sendMessage(sender, text) {
+  let messageData = { text: text };
+  request({
+    url: 'https://graph.facebook.com/v9.0/me/messages',
+    qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN },
+    method: 'POST',
+    json: {
+      recipient: { id: sender },
+      message: messageData
+    }
+  }, (error, response, body) => {
+    if (error) {
+      console.error('Error sending message:', error);
+    } else if (response.body.error) {
+      console.error('Facebook API error:', response.body.error);
+    }
+  });
+}
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
