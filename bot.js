@@ -61,7 +61,7 @@ function sendMessage(sender, text) {
   let messageData = { text: text };
   request({
     url: 'https://graph.facebook.com/v9.0/me/messages',
-qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN }
+    qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN },
     method: 'POST',
     json: {
       recipient: { id: sender },
@@ -71,4 +71,11 @@ qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN }
     if (error) {
       console.error('Error sending message:', error);
     } else if (response.body.error) {
-      console.error('Facebook
+      console.error('Facebook API error:', response.body.error);
+    }
+  });
+}
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
