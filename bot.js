@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 
 // Cấu hình webhook
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === 'my_secure_token') {
+  if (req.query['hub.verify_token'] === '123ABC') {
     res.send(req.query['hub.challenge']);
   } else {
     res.send('Error, wrong validation token');
