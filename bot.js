@@ -37,7 +37,8 @@ app.get('/privacy', (req, res) => {
 
 // Cấu hình webhook (GET) để xác thực
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === 'my_secure_token') {
+  if (req.query['hub.verify_token'] === process.env.VERIFY_TOKEN) {
+
     res.send(req.query['hub.challenge']);
   } else {
     res.send('Error, wrong validation token');
