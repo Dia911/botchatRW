@@ -6,6 +6,15 @@ const path = require('path');
 const app = express();
 app.use(bodyParser.json());
 
+// Sử dụng biến môi trường để bảo mật token
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || '123ABC';
+const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+
+if (!FACEBOOK_PAGE_ACCESS_TOKEN) {
+  console.error('Lỗi: Chưa thiết lập FACEBOOK_PAGE_ACCESS_TOKEN trong biến môi trường!');
+  process.exit(1);
+}
+
 // Endpoint cho trang Điều khoản Dịch vụ
 app.get('/terms', (req, res) => {
   res.sendFile(path.join(__dirname, 'terms.html'));
@@ -23,7 +32,7 @@ app.get('/', (req, res) => {
 
 // Endpoint webhook cho xác thực từ Facebook (GET)
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === '123ABC') {
+  if (req.query['hub.verify_token'] === VERIFY_TOKEN) {
     res.send(req.query['hub.challenge']);
   } else {
     res.send('Error, wrong validation token');
@@ -49,9 +58,7 @@ function sendMessage(sender, text) {
   let messageData = { text: text };
   request({
     url: 'https://graph.facebook.com/v9.0/me/messages',
-    qs: { access_token: 'EACFMGD4YyfMBO6qbMZArBKaY2JBoVjCqclWxnDvTRWuMZA0Ut1JBn41X8p5TVToXZAPAkU1FsCGhZCnpe1lCpTAdT7CuDdRZB9ILegSqPzFWf6MXyV2nQrhyhMyloiTUUy8CuvNNqdK61UtzbhpsQ8WyNPjtKTVZA65NltlZCdkwqRvGgdTJaVo8w6rgLXZClCOgBQZDZD' 
-    // Lưu ý: Anh nên lưu token này dưới dạng biến môi trường để bảo mật
-  }, {
+    qs: { access_token: FACEBOOK_PAGE_ACCESS_TOKEN },
     method: 'POST',
     json: {
       recipient: { id: sender },
