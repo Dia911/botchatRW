@@ -1,45 +1,27 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
-const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
 
-// Sử dụng biến môi trường để bảo mật token
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN || '123ABC';
-const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+// Đặt port cho server
+const port = process.env.PORT || 5000;
 
-if (!FACEBOOK_PAGE_ACCESS_TOKEN) {
-  console.error('Lỗi: Chưa thiết lập FACEBOOK_PAGE_ACCESS_TOKEN trong biến môi trường!');
-  process.exit(1);
-}
-
-// Endpoint cho trang Điều khoản Dịch vụ
-app.get('/terms', (req, res) => {
-  res.sendFile(path.join(__dirname, 'terms.html'));
-});
-
-// Endpoint cho trang Chính sách Quyền riêng tư
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'));
-});
-
-// Endpoint chính của bot (Home)
 app.get('/', (req, res) => {
   res.send('Hello, this is your bot!');
 });
 
-// Endpoint webhook cho xác thực từ Facebook (GET)
+// Cấu hình webhook (GET) để xác thực
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === VERIFY_TOKEN) {
+  if (req.query['hub.verify_token'] === 'my_secure_token') {
     res.send(req.query['hub.challenge']);
   } else {
     res.send('Error, wrong validation token');
   }
 });
 
-// Endpoint webhook để lắng nghe tin nhắn từ người dùng (POST)
+// Lắng nghe tin nhắn từ người dùng (POST)
 app.post('/webhook', (req, res) => {
   let messaging_events = req.body.entry[0].messaging;
   for (let i = 0; i < messaging_events.length; i++) {
@@ -58,22 +40,15 @@ function sendMessage(sender, text) {
   let messageData = { text: text };
   request({
     url: 'https://graph.facebook.com/v9.0/me/messages',
-    qs: { access_token: FACEBOOK_PAGE_ACCESS_TOKEN },
+    qs: { access_token: 'EACFMGD4YyfMBO6qbMZArBKaY2JBoVjCqclWxnDvTRWuMZA0Ut1JBn41X8p5TVToXZAPAkU1FsCGhZCnpe1lCpTAdT7CuDdRZB9ILegSqPzFWf6MXyV2nQrhyhMyloiTUUy8CuvNNqdK61UtzbhpsQ8WyNPjtKTVZA65NltlZCdkwqRvGgdTJaVo8w6rgLXZClCOgBQZDZD' },
     method: 'POST',
     json: {
       recipient: { id: sender },
       message: messageData
     }
-  }, (error, response, body) => {
-    if (error) {
-      console.error('Lỗi khi gửi tin nhắn:', error);
-    } else if (response.body.error) {
-      console.error('Lỗi từ Facebook:', response.body.error);
-    }
   });
 }
 
-const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
