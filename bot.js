@@ -24,10 +24,11 @@ app.get('/terms', (req, res) => {
 });
 
 // Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
+// Sử dụng file "Privacy.html" với chữ "P" viết hoa.
 app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'), (err) => {
+  res.sendFile(path.join(__dirname, 'Privacy.html'), (err) => {
     if (err) {
-      console.error('Error sending privacy.html:', err);
+      console.error('Error sending Privacy.html:', err);
       res.status(err.status || 500).end();
     }
   });
