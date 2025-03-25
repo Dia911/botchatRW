@@ -61,7 +61,7 @@ function sendMessage(sender, text) {
   let messageData = { text: text };
   request({
     url: 'https://graph.facebook.com/v9.0/me/messages',
-    qs: { access_token: 'EACFMGD4YyfMBO6qbMZArBKaY2JBoVjCqclWxnDvTRWuMZA0Ut1JBn41X8p5TVToXZAPAkU1FsCGhZCnpe1lCpTAdT7CuDdRZB9ILegSqPzFWf6MXyV2nQrhyhMyloiTUUy8CuvNNqdK61UtzbhpsQ8WyNPjtKTVZA65NltlZCdkwqRvGgdTJaVo8w6rgLXZClCOgBQZDZD' },
+qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN }
     method: 'POST',
     json: {
       recipient: { id: sender },
