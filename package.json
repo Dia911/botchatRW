@@ -14,3 +14,6 @@
   "author": "Dia911",
   "license": "ISC"
 }
+"dependencies": {
+  "axios": "^1.6.0"
+}
