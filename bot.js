@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Đặt port cho server
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.get('/', (req, res) => {
