@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
-const path = require('path');  // Thêm require cho 'path'
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
@@ -71,20 +71,4 @@ function sendMessage(sender, text) {
     if (error) {
       console.error('Error sending message:', error);
     } else if (response.body.error) {
-      console.error('Facebook API error:', response.body.error);
-    }
-  });
-}
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-// Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'privacy.html'), (err) => {
-    if (err) {
-      console.error('Error sending privacy.html:', err);
-      res.status(err.status || 500).end();
-    }
-  });
-});
+      console.error('Facebook
