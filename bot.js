@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
+const path = require('path');  // Thêm require cho 'path'
 
 const app = express();
 app.use(bodyParser.json());
@@ -10,6 +11,26 @@ const port = process.env.PORT || 5000;
 
 app.get('/', (req, res) => {
   res.send('Hello, this is your bot!');
+});
+
+// Endpoint cho trang Điều khoản Dịch vụ (Terms)
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'terms.html'), (err) => {
+    if (err) {
+      console.error('Error sending terms.html:', err);
+      res.status(err.status || 500).end();
+    }
+  });
+});
+
+// Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'), (err) => {
+    if (err) {
+      console.error('Error sending privacy.html:', err);
+      res.status(err.status || 500).end();
+    }
+  });
 });
 
 // Cấu hình webhook (GET) để xác thực
@@ -45,6 +66,12 @@ function sendMessage(sender, text) {
     json: {
       recipient: { id: sender },
       message: messageData
+    }
+  }, (error, response, body) => {
+    if (error) {
+      console.error('Error sending message:', error);
+    } else if (response.body.error) {
+      console.error('Facebook API error:', response.body.error);
     }
   });
 }
