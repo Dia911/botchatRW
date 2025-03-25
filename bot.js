@@ -2,15 +2,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
 const path = require('path');
+const axios = require('axios');
 
 const app = express();
 app.use(bodyParser.json());
 
 // Đặt port cho server
 const port = process.env.PORT || 5000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.get('/', (req, res) => {
-  res.send('Hello, this is your bot!');
+  res.send('Hello, this is your bot powered by OpenAI!');
 });
 
 // Endpoint cho trang Điều khoản Dịch vụ (Terms)
@@ -24,7 +26,6 @@ app.get('/terms', (req, res) => {
 });
 
 // Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
-// Sử dụng file "Privacy.html" với chữ "P" viết hoa.
 app.get('/privacy', (req, res) => {
   res.sendFile(path.join(__dirname, 'Privacy.html'), (err) => {
     if (err) {
@@ -44,18 +45,34 @@ app.get('/webhook', (req, res) => {
 });
 
 // Lắng nghe tin nhắn từ người dùng (POST)
-app.post('/webhook', (req, res) => {
+app.post('/webhook', async (req, res) => {
   let messaging_events = req.body.entry[0].messaging;
-  for (let i = 0; i < messaging_events.length; i++) {
-    let event = messaging_events[i];
+  for (let event of messaging_events) {
     let sender = event.sender.id;
     if (event.message && event.message.text) {
-      let text = event.message.text;
-      sendMessage(sender, text);
+      let userMessage = event.message.text;
+      let botReply = await getOpenAIResponse(userMessage);
+      sendMessage(sender, botReply);
     }
   }
   res.sendStatus(200);
 });
+
+// Hàm gọi OpenAI API để tạo phản hồi
+async function getOpenAIResponse(message) {
+  try {
+    let response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'system', content: 'You are a helpful assistant.' }, { role: 'user', content: message }],
+    }, {
+      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` }
+    });
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    return 'Xin lỗi, tôi không thể trả lời ngay bây giờ.';
+  }
+}
 
 // Hàm gửi tin nhắn về cho người dùng
 function sendMessage(sender, text) {
