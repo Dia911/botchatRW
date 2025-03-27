@@ -1,100 +1,95 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const request = require('request');
-const path = require('path');
-const axios = require('axios');
+const express = require("express");
+const bodyParser = require("body-parser");
+const axios = require("axios");
+const path = require("path");
 
 const app = express();
 app.use(bodyParser.json());
 
-// Đặt port cho server
-const port = process.env.PORT || 3000;
+const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
-app.get('/', (req, res) => {
-  res.send('Hello, this is your bot powered by OpenAI!');
+// Danh sách FAQ
+const faq = {
+  "giờ mở cửa": "Chúng tôi mở cửa từ 9h sáng đến 10h tối hàng ngày!",
+  "địa chỉ": "Quán của chúng tôi ở 123 Đường ABC, Quận 1, TP.HCM!",
+  "menu": "Anh xem menu tại link này nhé: https://mymenu.com",
+};
+
+// Trang chủ
+app.get("/", (req, res) => {
+  res.send("Hello, this is your bot powered by OpenAI!");
 });
 
-// Endpoint cho trang Điều khoản Dịch vụ (Terms)
-app.get('/terms', (req, res) => {
-  res.sendFile(path.join(__dirname, 'terms.html'), (err) => {
-    if (err) {
-      console.error('Error sending terms.html:', err);
-      res.status(err.status || 500).end();
-    }
-  });
+// Trang điều khoản và quyền riêng tư
+app.get("/terms", (req, res) => {
+  res.sendFile(path.join(__dirname, "terms.html"));
 });
 
-// Endpoint cho trang Chính sách Quyền riêng tư (Privacy)
-app.get('/privacy', (req, res) => {
-  res.sendFile(path.join(__dirname, 'Privacy.html'), (err) => {
-    if (err) {
-      console.error('Error sending Privacy.html:', err);
-      res.status(err.status || 500).end();
-    }
-  });
+app.get("/privacy", (req, res) => {
+  res.sendFile(path.join(__dirname, "Privacy.html"));
 });
 
-// Cấu hình webhook (GET) để xác thực
-app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === process.env.VERIFY_TOKEN) {
-
-    res.send(req.query['hub.challenge']);
+// Xác thực Webhook
+app.get("/webhook", (req, res) => {
+  if (req.query["hub.verify_token"] === VERIFY_TOKEN) {
+    res.send(req.query["hub.challenge"]);
   } else {
-    res.send('Error, wrong validation token');
+    res.send("Error, wrong validation token");
   }
 });
 
-// Lắng nghe tin nhắn từ người dùng (POST)
-app.post('/webhook', async (req, res) => {
-  let messaging_events = req.body.entry[0].messaging;
-  for (let event of messaging_events) {
-    let sender = event.sender.id;
-    if (event.message && event.message.text) {
-      let userMessage = event.message.text;
-      let botReply = await getOpenAIResponse(userMessage);
-      sendMessage(sender, botReply);
-    }
-  }
-  res.sendStatus(200);
-});
+// Xử lý tin nhắn từ người dùng
+app.post("/webhook", async (req, res) => {
+  let body = req.body;
+  if (body.object === "page") {
+    body.entry.forEach(async (entry) => {
+      let webhook_event = entry.messaging[0];
+      let sender_psid = webhook_event.sender.id;
 
-// Hàm gọi OpenAI API để tạo phản hồi
-async function getOpenAIResponse(message) {
-  try {
-    let response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'system', content: 'You are a helpful assistant.' }, { role: 'user', content: message }],
-    }, {
-      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` }
+      if (webhook_event.message) {
+        let message = webhook_event.message.text?.toLowerCase();
+
+        if (faq[message]) {
+          sendMessage(sender_psid, faq[message]);
+        } else if (webhook_event.message.quick_reply?.payload === "ASK_CHATGPT") {
+          sendMessage(sender_psid, "Anh cứ hỏi, em sẽ nhờ ChatGPT trả lời!");
+        } else {
+          sendMessage(sender_psid, "Anh cần hỗ trợ chi tiết hơn? Gọi ngay 098xxx hoặc nhấn 'Hỏi ChatGPT'");
+          sendQuickReplies(sender_psid);
+        }
+      }
     });
-    return response.data.choices[0].message.content;
-  } catch (error) {
-    console.error('OpenAI API error:', error);
-    return 'Xin lỗi, tôi không thể trả lời ngay bây giờ.';
+    res.status(200).send("EVENT_RECEIVED");
+  } else {
+    res.sendStatus(404);
   }
-}
-
-// Hàm gửi tin nhắn về cho người dùng
-function sendMessage(sender, text) {
-  let messageData = { text: text };
-  request({
-    url: 'https://graph.facebook.com/v9.0/me/messages',
-    qs: { access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN },
-    method: 'POST',
-    json: {
-      recipient: { id: sender },
-      message: messageData
-    }
-  }, (error, response, body) => {
-    if (error) {
-      console.error('Error sending message:', error);
-    } else if (response.body.error) {
-      console.error('Facebook API error:', response.body.error);
-    }
-  });
-}
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
 });
+
+// Hàm gửi tin nhắn
+function sendMessage(sender_psid, response) {
+  let request_body = {
+    recipient: { id: sender_psid },
+    message: { text: response },
+  };
+  axios.post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
+    .catch(error => console.error("Error sending message:", error.response.data));
+}
+
+// Gửi lựa chọn "Hỏi ChatGPT"
+function sendQuickReplies(sender_psid) {
+  let request_body = {
+    recipient: { id: sender_psid },
+    message: {
+      text: "Chọn một tùy chọn:",
+      quick_replies: [
+        { content_type: "text", title: "Hỏi ChatGPT", payload: "ASK_CHATGPT" },
+      ],
+    },
+  };
+  axios.post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
+    .catch(error => console.error("Error sending quick replies:", error.response.data));
+}
+
+app.listen(3000, () => console.log("Chatbot is running on port 3000"));
