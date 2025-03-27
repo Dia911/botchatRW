@@ -9,6 +9,7 @@ app.use(bodyParser.json());
 const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const PHONE_NUMBER = "098xxx"; // Số điện thoại hỗ trợ
 
 // Danh sách FAQ
 const faq = {
@@ -53,11 +54,15 @@ app.post("/webhook", async (req, res) => {
 
         if (faq[message]) {
           sendMessage(sender_psid, faq[message]);
-        } else if (webhook_event.message.quick_reply?.payload === "ASK_CHATGPT") {
-          sendMessage(sender_psid, "Anh cứ hỏi, em sẽ nhờ ChatGPT trả lời!");
         } else {
-          sendMessage(sender_psid, "Anh cần hỗ trợ chi tiết hơn? Gọi ngay 098xxx hoặc nhấn 'Hỏi ChatGPT'");
           sendQuickReplies(sender_psid);
+        }
+      } else if (webhook_event.postback) {
+        let payload = webhook_event.postback.payload;
+        if (payload === "CALL_SUPPORT") {
+          sendMessage(sender_psid, `Anh vui lòng gọi ${PHONE_NUMBER} để được hỗ trợ!`);
+        } else if (payload === "ASK_CHATGPT") {
+          sendMessage(sender_psid, "Anh cứ hỏi, em sẽ nhờ ChatGPT trả lời!");
         }
       }
     });
@@ -67,7 +72,7 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// Hàm gửi tin nhắn
+// Gửi tin nhắn
 function sendMessage(sender_psid, response) {
   let request_body = {
     recipient: { id: sender_psid },
@@ -77,13 +82,14 @@ function sendMessage(sender_psid, response) {
     .catch(error => console.error("Error sending message:", error.response.data));
 }
 
-// Gửi lựa chọn "Hỏi ChatGPT"
+// Gửi lựa chọn gọi điện hoặc hỏi ChatGPT
 function sendQuickReplies(sender_psid) {
   let request_body = {
     recipient: { id: sender_psid },
     message: {
-      text: "Chọn một tùy chọn:",
+      text: "Anh cần hỗ trợ chi tiết hơn?",
       quick_replies: [
+        { content_type: "text", title: "Gọi hỗ trợ", payload: "CALL_SUPPORT" },
         { content_type: "text", title: "Hỏi ChatGPT", payload: "ASK_CHATGPT" },
       ],
     },
