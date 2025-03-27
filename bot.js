@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
@@ -10,6 +11,11 @@ const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const PHONE_NUMBER = "098xxx"; // Số điện thoại hỗ trợ
+
+if (!VERIFY_TOKEN) {
+  console.error("❌ LỖI: VERIFY_TOKEN chưa được đặt trong .env");
+  process.exit(1);
+}
 
 // Danh sách FAQ
 const faq = {
@@ -34,10 +40,16 @@ app.get("/privacy", (req, res) => {
 
 // Xác thực Webhook
 app.get("/webhook", (req, res) => {
+  console.log("🔍 Xác thực webhook...");
+  console.log("📌 Token nhận được:", req.query["hub.verify_token"]);
+  console.log("📌 Token mong đợi:", VERIFY_TOKEN);
+
   if (req.query["hub.verify_token"] === VERIFY_TOKEN) {
+    console.log("✅ Xác thực thành công!");
     res.send(req.query["hub.challenge"]);
   } else {
-    res.send("Error, wrong validation token");
+    console.error("❌ LỖI: Sai VERIFY_TOKEN!");
+    res.status(403).send("Error, wrong validation token");
   }
 });
 
@@ -78,8 +90,10 @@ function sendMessage(sender_psid, response) {
     recipient: { id: sender_psid },
     message: { text: response },
   };
-  axios.post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
-    .catch(error => console.error("Error sending message:", error.response.data));
+  axios
+    .post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
+    .then(() => console.log(`📩 Gửi tin nhắn đến ${sender_psid}: ${response}`))
+    .catch((error) => console.error("❌ LỖI GỬI TIN NHẮN:", error.response?.data || error.message));
 }
 
 // Gửi lựa chọn gọi điện hoặc hỏi ChatGPT
@@ -94,10 +108,11 @@ function sendQuickReplies(sender_psid) {
       ],
     },
   };
-  axios.post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
-    .catch(error => console.error("Error sending quick replies:", error.response.data));
+  axios
+    .post(`https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, request_body)
+    .then(() => console.log(`📩 Gửi quick replies đến ${sender_psid}`))
+    .catch((error) => console.error("❌ LỖI GỬI QUICK REPLIES:", error.response?.data || error.message));
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Chatbot is running on port ${PORT}`));
-
+app.listen(PORT, () => console.log(`🚀 Chatbot is running on port ${PORT}`));
