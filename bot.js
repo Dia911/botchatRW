@@ -98,4 +98,6 @@ function sendQuickReplies(sender_psid) {
     .catch(error => console.error("Error sending quick replies:", error.response.data));
 }
 
-app.listen(3000, () => console.log("Chatbot is running on port 3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Chatbot is running on port ${PORT}`));
+
