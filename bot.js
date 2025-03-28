@@ -147,3 +147,35 @@ app.listen(PORT, async () => {
   console.log(`🚀 Chatbot is running on port ${PORT}`);
   await setupPhoneButton(); // Gọi hàm setup menu khi server khởi động
 });
+const request = require("request");
+
+const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN; // Lấy từ biến môi trường Railway
+
+const menuData = {
+  persistent_menu: [
+    {
+      locale: "default",
+      composer_input_disabled: false,
+      call_to_actions: [
+        {
+          type: "web_url",
+          title: "📞 Gọi ngay",
+          url: "tel:+8491381686"
+        }
+      ]
+    }
+  ]
+};
+
+request({
+  url: `https://graph.facebook.com/v18.0/me/messenger_profile?access_token=${PAGE_ACCESS_TOKEN}`,
+  method: "POST",
+  json: true,
+  body: menuData
+}, (error, response, body) => {
+  if (error) {
+    console.error("❌ Lỗi khi cập nhật menu:", error);
+  } else {
+    console.log("✅ Menu cập nhật thành công:", body);
+  }
+});
