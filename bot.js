@@ -116,3 +116,41 @@ function sendQuickReplies(sender_psid) {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Chatbot is running on port ${PORT}`));
+const axios = require("axios");
+
+const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+
+const setupPhoneButton = async () => {
+  const url = `https://graph.facebook.com/v12.0/me/messenger_profile?access_token=${PAGE_ACCESS_TOKEN}`;
+  const menuData = {
+    persistent_menu: [
+      {
+        locale: "default",
+        composer_input_disabled: false,
+        call_to_actions: [
+          {
+            title: "📞 Gọi hỗ trợ",
+            type: "phone_number",
+            payload: "CALL_SUPPORT",
+            phone_number: "+8491381686",
+          },
+          {
+            title: "📜 Xem menu",
+            type: "web_url",
+            url: "https://mymenu.com",
+          },
+        ],
+      },
+    ],
+  };
+
+  try {
+    await axios.post(url, menuData);
+    console.log("✅ Đã thêm nút gọi điện vào menu!");
+  } catch (error) {
+    console.error("❌ Lỗi khi cập nhật menu:", error.response?.data || error.message);
+  }
+};
+
+// Gọi hàm này khi server Railway khởi động
+setupPhoneButton();
