@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
-const PHONE_NUMBER = "098xxx"; // Số điện thoại hỗ trợ
+const PHONE_NUMBER = "+8491381686"; // Số điện thoại hỗ trợ (định dạng quốc tế)
 
 if (!VERIFY_TOKEN) {
   console.error("❌ LỖI: VERIFY_TOKEN chưa được đặt trong .env");
@@ -40,15 +40,9 @@ app.get("/privacy", (req, res) => {
 
 // Xác thực Webhook
 app.get("/webhook", (req, res) => {
-  console.log("🔍 Xác thực webhook...");
-  console.log("📌 Token nhận được:", req.query["hub.verify_token"]);
-  console.log("📌 Token mong đợi:", VERIFY_TOKEN);
-
   if (req.query["hub.verify_token"] === VERIFY_TOKEN) {
-    console.log("✅ Xác thực thành công!");
     res.send(req.query["hub.challenge"]);
   } else {
-    console.error("❌ LỖI: Sai VERIFY_TOKEN!");
     res.status(403).send("Error, wrong validation token");
   }
 });
@@ -103,7 +97,7 @@ function sendQuickReplies(sender_psid) {
     message: {
       text: "Anh cần hỗ trợ chi tiết hơn?",
       quick_replies: [
-        { content_type: "text", title: "Gọi hỗ trợ", payload: "CALL_SUPPORT" },
+        { content_type: "text", title: "📞 Gọi hỗ trợ", payload: "CALL_SUPPORT" },
         { content_type: "text", title: "Hỏi ChatGPT", payload: "ASK_CHATGPT" },
       ],
     },
@@ -114,12 +108,7 @@ function sendQuickReplies(sender_psid) {
     .catch((error) => console.error("❌ LỖI GỬI QUICK REPLIES:", error.response?.data || error.message));
 }
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Chatbot is running on port ${PORT}`));
-const axios = require("axios");
-
-const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-
+// Cấu hình nút gọi điện trong menu Messenger
 const setupPhoneButton = async () => {
   const url = `https://graph.facebook.com/v12.0/me/messenger_profile?access_token=${PAGE_ACCESS_TOKEN}`;
   const menuData = {
@@ -132,7 +121,7 @@ const setupPhoneButton = async () => {
             title: "📞 Gọi hỗ trợ",
             type: "phone_number",
             payload: "CALL_SUPPORT",
-            phone_number: "+8491381686",
+            phone_number: PHONE_NUMBER,
           },
           {
             title: "📜 Xem menu",
@@ -152,5 +141,9 @@ const setupPhoneButton = async () => {
   }
 };
 
-// Gọi hàm này khi server Railway khởi động
-setupPhoneButton();
+// Chạy server + cài đặt nút gọi điện
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`🚀 Chatbot is running on port ${PORT}`);
+  await setupPhoneButton(); // Gọi hàm setup menu khi server khởi động
+});
