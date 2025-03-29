@@ -6,6 +6,7 @@ const path = require("path");
 
 const app = express();
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, "public"))); // 🔹 Cấu hình phục vụ file tĩnh
 
 const { FACEBOOK_PAGE_ACCESS_TOKEN, VERIFY_TOKEN, PHONE_NUMBER, PORT = 3000 } = process.env;
 
@@ -14,39 +15,30 @@ if (!VERIFY_TOKEN) {
   process.exit(1);
 }
 
-// Thay đổi nội dung FAQ
+// Thông tin FAQ cho chatbot
 const faq = {
   "openlive group": "OpenLive Group là tập đoàn công nghệ chuyên về AI, Web3, truyền thông và thương mại điện tử.",
-  "công ty thành viên": `OpenLive Group gồm các công ty thành viên:
-    - OBranding: Thương mại điện tử số (e-Voucher, e-Membership).
-    - OMedia Studio: Truyền thông và công nghệ hình ảnh Bullet Time.
-    - OLabs: AI, Machine Learning, Web3, chuyển đổi số.
-    - OProducts: Thiết kế đồ họa, in ấn, quảng cáo.`,
-  "sản phẩm dịch vụ": `Các sản phẩm/dịch vụ chính của OpenLive Group:
-    - Mobase Exchange: Sàn giao dịch tiền điện tử.
-    - Monbase NFT Exchange: Sàn giao dịch NFT.
+  "công ty thành viên": `Các công ty thành viên:
     - OBranding: Thương mại điện tử số.
-    - Mobase Token (MBC): Token BEP20 của hệ sinh thái OpenLive.`,
-  "mục tiêu chiến lược": "OpenLive Group hướng đến việc phát triển hệ sinh thái công nghệ, hỗ trợ doanh nghiệp trong thời đại số.",
-  "quyền lợi nhà đầu tư": `Nhà đầu tư OpenLive Group nhận được:
-    - Chia sẻ doanh thu qua Mobase Token (MBC).
-    - Cổ tức hàng năm.
-    - Khuyến mãi đầu tư.
-    - Ưu đãi đặc biệt từ OBranding.`,
-  "cách đầu tư": "Nhà đầu tư có thể mua Mobase Token (MBC) trên XT.com và nạp vào trang web bcc.monbase.com.",
-  "thành tựu openlive": `OpenLive Group đã ký kết hợp tác chiến lược với các tập đoàn như SOL International, Velicious Food. 
-    - Mở rộng mạng lưới kinh doanh tại Hà Nội.
-    - Phát triển nền tảng OBranding cho doanh nghiệp.`,
+    - OMedia Studio: Truyền thông AI.
+    - OLabs: AI, Machine Learning, Web3.`,
+  "sản phẩm dịch vụ": "Mobase Exchange, Monbase NFT, OBranding, Mobase Token (MBC).",
+  "mục tiêu chiến lược": "Hướng đến phát triển hệ sinh thái công nghệ AI, Web3.",
+  "quyền lợi nhà đầu tư": "Chia sẻ doanh thu, cổ tức hàng năm, ưu đãi đặc biệt.",
+  "cách đầu tư": "Mua Mobase Token (MBC) trên XT.com và nạp vào hệ sinh thái.",
+  "thành tựu openlive": "Hợp tác với SOL International, mở rộng mạng lưới kinh doanh.",
 };
 
-app.get("/", (req, res) => res.send("Hello, this is your bot powered by OpenAI!"));
+// 📌 Route chính
+app.get("/", (req, res) => res.send("🚀 Chatbot OpenLive đang hoạt động!"));
 app.get("/terms", (req, res) => res.sendFile(path.join(__dirname, "terms.html")));
 app.get("/privacy", (req, res) => res.sendFile(path.join(__dirname, "Privacy.html")));
 
+// ✅ Webhook Facebook Messenger
 app.get("/webhook", (req, res) => {
   req.query["hub.verify_token"] === VERIFY_TOKEN
     ? res.send(req.query["hub.challenge"])
-    : res.status(403).send("Error, wrong validation token");
+    : res.status(403).send("❌ Sai mã VERIFY_TOKEN");
 });
 
 app.post("/webhook", async (req, res) => {
@@ -70,6 +62,7 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+// 📩 Gửi tin nhắn đến người dùng
 function sendMessage(sender_psid, response, withQuickReplies = false) {
   let request_body = {
     recipient: { id: sender_psid },
@@ -86,6 +79,7 @@ function sendMessage(sender_psid, response, withQuickReplies = false) {
     .catch((error) => console.error("❌ LỖI GỬI TIN NHẮN:", error.response?.data || error.message));
 }
 
+// 🔹 Cập nhật Menu của chatbot
 async function setupPhoneButton() {
   try {
     await axios.post(`https://graph.facebook.com/v12.0/me/messenger_profile?access_token=${FACEBOOK_PAGE_ACCESS_TOKEN}`, {
@@ -106,7 +100,8 @@ async function setupPhoneButton() {
   }
 }
 
+// 🚀 Khởi chạy server
 app.listen(PORT, async () => {
-  console.log(`🚀 Chatbot is running on port ${PORT}`);
+  console.log(`🚀 Chatbot đang chạy tại cổng ${PORT}`);
   await setupPhoneButton();
 });
