@@ -14,10 +14,29 @@ if (!VERIFY_TOKEN) {
   process.exit(1);
 }
 
+// Thay đổi nội dung FAQ
 const faq = {
-  "giờ mở cửa": "Chúng tôi mở cửa từ 9h sáng đến 10h tối hàng ngày!",
-  "địa chỉ": "Quán của chúng tôi ở 123 Đường ABC, Quận 1, TP.HCM!",
-  "menu": "Anh xem menu tại link này nhé: https://mymenu.com",
+  "openlive group": "OpenLive Group là tập đoàn công nghệ chuyên về AI, Web3, truyền thông và thương mại điện tử.",
+  "công ty thành viên": `OpenLive Group gồm các công ty thành viên:
+    - OBranding: Thương mại điện tử số (e-Voucher, e-Membership).
+    - OMedia Studio: Truyền thông và công nghệ hình ảnh Bullet Time.
+    - OLabs: AI, Machine Learning, Web3, chuyển đổi số.
+    - OProducts: Thiết kế đồ họa, in ấn, quảng cáo.`,
+  "sản phẩm dịch vụ": `Các sản phẩm/dịch vụ chính của OpenLive Group:
+    - Mobase Exchange: Sàn giao dịch tiền điện tử.
+    - Monbase NFT Exchange: Sàn giao dịch NFT.
+    - OBranding: Thương mại điện tử số.
+    - Mobase Token (MBC): Token BEP20 của hệ sinh thái OpenLive.`,
+  "mục tiêu chiến lược": "OpenLive Group hướng đến việc phát triển hệ sinh thái công nghệ, hỗ trợ doanh nghiệp trong thời đại số.",
+  "quyền lợi nhà đầu tư": `Nhà đầu tư OpenLive Group nhận được:
+    - Chia sẻ doanh thu qua Mobase Token (MBC).
+    - Cổ tức hàng năm.
+    - Khuyến mãi đầu tư.
+    - Ưu đãi đặc biệt từ OBranding.`,
+  "cách đầu tư": "Nhà đầu tư có thể mua Mobase Token (MBC) trên XT.com và nạp vào trang web bcc.monbase.com.",
+  "thành tựu openlive": `OpenLive Group đã ký kết hợp tác chiến lược với các tập đoàn như SOL International, Velicious Food. 
+    - Mở rộng mạng lưới kinh doanh tại Hà Nội.
+    - Phát triển nền tảng OBranding cho doanh nghiệp.`,
 };
 
 app.get("/", (req, res) => res.send("Hello, this is your bot powered by OpenAI!"));
@@ -76,7 +95,7 @@ async function setupPhoneButton() {
           composer_input_disabled: false,
           call_to_actions: [
             { title: "📞 Gọi hỗ trợ", type: "phone_number", payload: "CALL_SUPPORT", phone_number: PHONE_NUMBER },
-            { title: "📜 Xem menu", type: "web_url", url: "https://mymenu.com" },
+            { title: "📜 Xem thêm", type: "web_url", url: "https://openlivegroup.com" },
           ],
         },
       ],
